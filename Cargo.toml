@@ -1,0 +1,27 @@
+[package]
+name = "age-plugin-sntrup761x25519"
+description = "[ALPHA] age encryption plugin which enables post-quantum algorithm sntrup761x25519 support"
+version = "0.1.0"
+authors = ["Klaus Eisentraut <klaus-age-plugin-sntrup761x25519@hohenpoelz.de>"]
+repository = "https://github.com/keisentraut/age-plugin-sntrup761x25519@hohenpoelz.de"
+readme = "README.md"
+keywords = ["age", "cli", "encryption", "pqcrypto"]
+categories = ["command-line-utilities", "cryptography"]
+license = "MIT OR Apache-2.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+age-core = "0.7"
+age-plugin = "0.2"
+base64 = "0.13"
+bech32 = "0.8"
+sha2 = "0.10.2"
+structopt = { version = "0.3.26", default-features = false }
+pqcrypto = "0.15.0"
+pqcrypto-traits = "0.3.4"
+x25519-dalek = "1.1.1"
+getrandom = { version = "*"}
+rand = { version = "*", features = ["getrandom"] }
+rand_core = "*"
