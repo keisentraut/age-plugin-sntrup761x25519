@@ -1,14 +1,16 @@
 use age_core::format::{FileKey, Stanza};
+use age_plugin::recipient::Error::Recipient;
 use age_plugin::{
     identity::{self, IdentityPluginV1},
     print_new_identity,
     recipient::{self, RecipientPluginV1},
     run_state_machine, Callbacks,
 };
+use rand_core::OsRng;
 use std::collections::HashMap;
 use std::io;
-use age_plugin::recipient::Error::Recipient;
 use structopt::StructOpt;
+use x25519_dalek::{EphemeralSecret, StaticSecret};
 
 use pqcrypto::kem::sntrup761;
 
@@ -21,9 +23,10 @@ const RECIPIENT_PREFIX: &str = "age1sntrup761x25519";
 const IDENTITY_PREFIX: &str = "age-plugin-sntrup761x25519-";
 const STANZA_TAG: &str = "sntrup761x25519";
 
-#[derive(Default, Debug)]
+#[derive(Default)]
 pub(crate) struct RecipientPlugin {
     recipients: Vec<sntrup761x25519::Recipient>,
+    identities: Vec<sntrup761x25519::Identity>,
 }
 
 impl RecipientPluginV1 for RecipientPlugin {
@@ -35,8 +38,17 @@ impl RecipientPluginV1 for RecipientPlugin {
     ) -> Result<(), recipient::Error> {
         eprintln!("age-plugin-unencrypted: RecipientPluginV1::add_recipient called");
         if plugin_name == PLUGIN_NAME {
-            // A real plugin would store the recipient here.
-            Ok(())
+            // parse and store (if success) recipient
+            match sntrup761x25519::Recipient::from_bytes(bytes) {
+                Some(r) => {
+                    self.recipients.push(r);
+                    Ok(())
+                }
+                None => Err(recipient::Error::Recipient {
+                    index,
+                    message: "Invalid recipient".to_owned(),
+                }),
+            }
         } else {
             Err(recipient::Error::Recipient {
                 index,
@@ -51,7 +63,24 @@ impl RecipientPluginV1 for RecipientPlugin {
         plugin_name: &str,
         bytes: &[u8],
     ) -> Result<(), recipient::Error> {
-        todo!()
+        eprintln!("age-plugin-unencrypted: RecipientPluginV1::add_identity called");
+        if plugin_name == PLUGIN_NAME {
+            match sntrup761x25519::Identity::from_bytes(bytes) {
+                Some(i) => {
+                    self.identities.push(i);
+                    Ok(())
+                }
+                None => Err(recipient::Error::Identity {
+                    index,
+                    message: "Invalid identity".to_owned(),
+                }),
+            }
+        } else {
+            Err(recipient::Error::Identity {
+                index,
+                message: "Invalid identity".to_owned(),
+            })
+        }
     }
 
     fn wrap_file_keys(
@@ -59,12 +88,21 @@ impl RecipientPluginV1 for RecipientPlugin {
         file_keys: Vec<FileKey>,
         mut callbacks: impl Callbacks<recipient::Error>,
     ) -> io::Result<Result<Vec<Vec<Stanza>>, Vec<recipient::Error>>> {
-        todo!()
+        eprintln!("age-plugin-unencrypted: RecipientPluginV1::wrap_file_keys called");
+
+        // for fk in file_keys {
+        //     for i in self.identities {
+        //         let esk = EphemeralSecret::new(OsRng);
+        //     }
+        // }
+        todo!();
     }
 }
 
-#[derive(Debug, Default)]
-struct IdentityPlugin;
+#[derive(Debug, Default, Clone)]
+struct IdentityPlugin {
+    identities: Vec<sntrup761x25519::Identity>,
+}
 
 impl IdentityPluginV1 for IdentityPlugin {
     fn add_identity(
@@ -73,7 +111,24 @@ impl IdentityPluginV1 for IdentityPlugin {
         plugin_name: &str,
         bytes: &[u8],
     ) -> Result<(), identity::Error> {
-        todo!()
+        eprintln!("age-plugin-unencrypted: IdentityPluginV1::add_identity called");
+        if plugin_name == PLUGIN_NAME {
+            match sntrup761x25519::Identity::from_bytes(bytes) {
+                Some(i) => {
+                    self.identities.push(i);
+                    Ok(())
+                }
+                None => Err(identity::Error::Identity {
+                    index,
+                    message: "Invalid identity".to_owned(),
+                }),
+            }
+        } else {
+            Err(identity::Error::Identity {
+                index,
+                message: "Invalid identity".to_owned(),
+            })
+        }
     }
 
     fn unwrap_file_keys(
@@ -81,6 +136,7 @@ impl IdentityPluginV1 for IdentityPlugin {
         files: Vec<Vec<Stanza>>,
         mut callbacks: impl Callbacks<identity::Error>,
     ) -> io::Result<HashMap<usize, Result<FileKey, Vec<identity::Error>>>> {
+        eprintln!("age-plugin-unencrypted: IdentityPluginV1::unwrap_file_keys called");
         todo!()
     }
 }
@@ -115,16 +171,23 @@ fn main() -> io::Result<()> {
 
     // Here you can assume the binary is being run directly by a user,
     // and perform administrative tasks like generating keys.
-    let (mut pk, mut sk) = pqcrypto::kem::sntrup761::keypair();
-    let (ss1, ct) = pqcrypto::kem::sntrup761::encapsulate(&pk);
-    let ss2 = pqcrypto::kem::sntrup761::decapsulate(&ct, &sk);
-    assert!(ss1 == ss2);
-    println!("Public Key {:?}", pk.as_bytes());
-    println!("Secret Key {:?}", sk.as_bytes());
-    println!("");
-    println!("");
-    println!("");
-    println!("{:?}", sntrup761x25519Recipient::gen_test());
-    println!("{:}", sntrup761x25519Recipient::gen_test());
-    Ok(())
+    // let (mut pk, mut sk) = pqcrypto::kem::sntrup761::keypair();
+    // let (ss1, ct) = pqcrypto::kem::sntrup761::encapsulate(&pk);
+    // let ss2 = pqcrypto::kem::sntrup761::decapsulate(&ct, &sk);
+    // assert!(ss1 == ss2);
+    // println!("Public Key {:?}", pk.as_bytes());
+    // println!("Secret Key {:?}", sk.as_bytes());
+    // println!("");
+    // println!("");
+    // println!("");
+    // println!("{:?}", sntrup761x25519Recipient::gen_test());
+    // println!("{:}", sntrup761x25519Recipient::gen_test());
+
+    let (mut sntrup761pk, mut sntrup761sk) = pqcrypto::kem::sntrup761::keypair();
+    let x25519sk = x25519_dalek::StaticSecret::new(OsRng);
+    println!(
+        "# created: {}",
+        chrono::Local::now().to_rfc3339_opts(chrono::SecondsFormat::Secs, true)
+    );
+    todo!();
 }

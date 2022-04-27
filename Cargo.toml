@@ -17,11 +17,12 @@ age-core = "0.7"
 age-plugin = "0.2"
 base64 = "0.13"
 bech32 = "0.8"
-sha2 = "0.10.2"
-structopt = { version = "0.3.26", default-features = false }
-pqcrypto = "0.15.0"
-pqcrypto-traits = "0.3.4"
-x25519-dalek = "1.1.1"
+sha2 = "0.10"
+structopt = { version = "0.3", default-features = false }
+pqcrypto = "0.15"
+pqcrypto-traits = "0.3"
+x25519-dalek = "1.1"
 getrandom = { version = "*"}
 rand = { version = "*", features = ["getrandom"] }
 rand_core = "*"
+chrono = "0.4"
