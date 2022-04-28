@@ -1,12 +1,11 @@
-use crate::{IDENTITY_PREFIX, RECIPIENT_PREFIX};
+use std::fmt;
+
 use bech32::{ToBase32, Variant};
 use pqcrypto::kem::sntrup761;
 use pqcrypto_traits::kem::{PublicKey, SecretKey};
-use rand_core::OsRng;
-use sha2::{Digest, Sha256};
-use std::fmt;
 use x25519_dalek;
-use x25519_dalek::EphemeralSecret;
+
+use crate::{IDENTITY_PREFIX, RECIPIENT_PREFIX};
 
 #[derive(Clone)]
 pub(crate) struct Recipient {
@@ -48,6 +47,16 @@ impl Recipient {
     //         x25519pk: x25519pk,
     //     }
     // }
+
+    pub(crate) fn new(
+        x25519pk: x25519_dalek::PublicKey,
+        sntrup761pk: sntrup761::PublicKey,
+    ) -> Self {
+        Recipient {
+            x25519pk: x25519pk,
+            sntrup761pk: sntrup761pk,
+        }
+    }
     /// Attempts to parse a valid recipient.
     pub(crate) fn from_bytes(bytes: &[u8]) -> Option<Self> {
         if bytes.len() == 32 + sntrup761::public_key_bytes() {
@@ -62,6 +71,12 @@ impl Recipient {
         } else {
             None
         }
+    }
+    pub(crate) fn get_x25519pk(self: &Self) -> &x25519_dalek::PublicKey {
+        &self.x25519pk
+    }
+    pub(crate) fn get_sntrup761pk(self: &Self) -> &sntrup761::PublicKey {
+        &self.sntrup761pk
     }
 }
 
@@ -90,12 +105,22 @@ impl fmt::Display for Identity {
         f.write_str(
             bech32::encode(IDENTITY_PREFIX, &concattedsk.to_base32(), Variant::Bech32)
                 .expect("HRP is invalid")
+                .to_ascii_uppercase()
                 .as_str(),
         )
     }
 }
 
 impl Identity {
+    pub(crate) fn new(
+        x25519sk: x25519_dalek::StaticSecret,
+        sntrup761sk: sntrup761::SecretKey,
+    ) -> Self {
+        Identity {
+            x25519sk: x25519sk,
+            sntrup761sk: sntrup761sk,
+        }
+    }
     pub(crate) fn from_bytes(bytes: &[u8]) -> Option<Self> {
         if bytes.len() == 32 + sntrup761::secret_key_bytes() {
             let x25519sk = bytes[..32].to_vec();
@@ -110,5 +135,12 @@ impl Identity {
         } else {
             None
         }
+    }
+
+    pub(crate) fn get_x25519sk(self: &Self) -> &x25519_dalek::StaticSecret {
+        &self.x25519sk
+    }
+    pub(crate) fn get_sntrup761sk(self: &Self) -> &sntrup761::SecretKey {
+        &self.sntrup761sk
     }
 }
